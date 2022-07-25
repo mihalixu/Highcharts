@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>A Simple Google Map</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style type="text/css">
+    #container {
+        height: 400px;
+    }
+
+    .highcharts-figure,
+    .highcharts-data-table table {
+        min-width: 310px;
+        max-width: 800px;
+        margin: 1em auto;
+        border: 1px solid black;
+    }
+
+    .highcharts-data-table table {
+        font-family: Verdana, sans-serif;
+        border-collapse: collapse;
+        border: 1px solid #ebebeb;
+        margin: 10px auto;
+        text-align: center;
+        width: 100%;
+        max-width: 500px;
+    }
+
+    .highcharts-data-table caption {
+        padding: 1em 0;
+        font-size: 1.2em;
+        color: #555;
+    }
+
+    .highcharts-data-table th {
+        font-weight: 600;
+        padding: 0.5em;
+    }
+
+    .highcharts-data-table td,
+    .highcharts-data-table th,
+    .highcharts-data-table caption {
+        padding: 0.5em;
+    }
+
+    .highcharts-data-table thead tr,
+    .highcharts-data-table tr:nth-child(even) {
+        background: #f8f8f8;
+    }
+
+    .highcharts-data-table tr:hover {
+        background: #f1f7ff;
+    }
+
+    table {
+    margin-left:auto;
+    margin-right:auto;
+    border-collapse: collapse;
+    /*width: 100%; */
+    }
+    
+    td, th {
+    text-align: left;
+    padding: 8px;
+    }
+    
+    tr:nth-child(even) {
+    background-color: #f2f2f2;
+    }
+
+</style>
+
+</head>
+<body style="background-color: silver;">
+
+<script src="highcharts.js"></script>
+<script src="highcharts-more.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAN8yFY4C2e4CxwhwAlA4-_Nhixu8AMJ1A"></script>
+<div  style="text-align: center; background-color: rgb(237, 227, 227);">
+    <h1 >Zipcode City Finder and Live Weather</h1>
+    <input id="postal" value="8010" style="margin: auto;">
+    <button onclick="getCity()">Check zipcode location</button>
+    <button onclick="drawOnMap()">Show Radius</button>
+    <input id="From" type="datetime-local" value="2022-01-01T00:00:00">
+    <input id="To" type="datetime-local" value="2022-04-01T00:00:00">
+    <button onclick="polution()">Check Pollution</button>
+</div>
+
+<div id="map" style="width:800px; height: 400px; margin: auto;"></div>
+
+<figure class="highcharts-figure">
+    <div id="container"></div>
+    <div id="container2"></div>
+</figure>
+
+<script>
+var lonLat;
+function getCity(){
+    url = "https://api.zippopotam.us/at/";
+    url += $("#postal").val();
+    $.get(url, function (data, status) {
+        lonLat = data;
+        var map_parameters = { 
+        center: {lat: parseFloat(lonLat.places[0].latitude), lng: parseFloat(lonLat.places[0].longitude)}, zoom: 11 };
+        var map = new google.maps.Map(document.getElementById('map'), map_parameters);
+
+});
+}
+
+// Radius on Maps
+function drawOnMap() {
+        url = "https://api.zippopotam.us/at/";
+        url += $("#postal").val();
+        $.get(url, function (data, status) {
+            var latitude = parseFloat(data.places[0].latitude);
+            var longitude = parseFloat(data.places[0].longitude);
+            var mapAttr = {
+            center: {lat:latitude,lng:longitude},
+            zoom: 11,
+            mapTypeId: google.maps.map
+        };
+        map = new google.maps.Map(document.getElementById("map"), mapAttr);
+        var circle = new google.maps.Circle({
+            center: {lat:latitude,lng:longitude},
+            map: map,
+            radius: 10000,  // in m
+            fillColor: '#FF6600',
+            fillOpacity: 0.2,
+            strokeColor: "#FFF",
+            strokeWeight: 1       
+        });
+    });
+}
+
+
+Highcharts.chart('container', {
+    chart: {
+        type: 'spline',
+        events: {
+            load: function () {
+                // set up the updating of the chart each second
+                var series = this.series[0];     
+                setInterval(function () {
+                url2 = "https://api.openweathermap.org/data/2.5/weather?lat="+lonLat.places[0].latitude;
+                url2 += "&lon="+lonLat.places[0].longitude;
+                url2 += "&appid=99501c66e3b1fcea845b4ddde8111732";    
+                $.get(url2, function (data, status) 
+                { 
+                    let x = new Date().getTime(); 
+                    let y = data.main.temp - 273.15;
+                    series.addPoint([x, y], true, false);
+                });
+                }, 3000);
+            }
+        }
+    },
+    title: {
+        text: 'Live Weather Data'
+    },
+    xAxis: {
+        type: 'datetime',
+    },
+    yAxis: {
+        title: {
+            text: 'Temperature in °C'   
+        },
+    },
+    series: [{
+        name: 'Temp.',
+        data: null, 
+    }]
+});
+
+var options = {
+            chart: {
+                zoomType: 'x'
+            },
+
+            title: {
+                text: 'City Polution'
+            },
+            subtitle: {
+                text: '☠'
+            },
+            yAxis: {
+                title: {
+                    text: 'Particles μm',
+                },
+            },
+            xAxis: {
+                type: 'datetime',
+            },
+            series: [{
+                name: 'Kohlenstoffmonoxid',
+                data: null,
+                tooltip: {
+                    valueSuffix: ' μm'
+                }
+            },
+                {
+                name: 'Ozon',
+                data: null,
+                tooltip: {
+                    valueSuffix: ' μm'
+                },
+            },
+            {
+                name: 'Schwefeldioxid',
+                data: null,
+                tooltip: {
+                    valueSuffix: ' μm'
+                },
+            }],
+        }
+
+function polution(){
+            url = "https://api.zippopotam.us/at/";
+            url += $("#postal").val();
+            $.get(url, function (data, status) {
+            let unixF = (Date.parse($("#From").val())).toString().substring(0,10);
+            let unixT = (Date.parse($("#To").val())).toString().substring(0,10);
+            let latLon = data.places[0];
+            let url2 = "https://api.openweathermap.org/data/2.5/air_pollution/history?lat="+ latLon.latitude+"&lon="+latLon.longitude+"&start="+unixF+"&end="+unixT+"&appid=99501c66e3b1fcea845b4ddde8111732" 
+            let dataParticle1 = new Array;
+            let dataParticle2 = new Array;
+            let dataParticle3 = new Array;
+            $.get(url2,function(data,status){
+            for(let i = 0; i < data.list.length;i++){ 
+                let Kohlenstoffmonoxid = new Array;
+                let Ozon = new Array;
+                let Schwefeldioxid = new Array;
+                
+                let unix_convert = data.list[i].dt;
+                unix_convert = parseInt(unix_convert.toString() + "000");  
+                
+                Kohlenstoffmonoxid[0] = unix_convert;
+                Kohlenstoffmonoxid[1] = data.list[i].components.co;
+                
+                Ozon[0] = unix_convert;
+                Ozon[1] = data.list[i].components.o3;
+                
+                Schwefeldioxid[0] = unix_convert;
+                Schwefeldioxid[1] = data.list[i].components.so2;
+                
+                dataParticle1.push(Kohlenstoffmonoxid);
+                dataParticle2.push(Ozon);
+                dataParticle3.push(Schwefeldioxid);
+            }
+            options.series[0].data = dataParticle1;
+            options.series[1].data = dataParticle2;
+            options.series[2].data = dataParticle3;
+            Highcharts.chart('container2', options);
+        })
+    });
+}
+
+</script>
+</body>
+</html> 
