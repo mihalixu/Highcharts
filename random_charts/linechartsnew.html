@@ -1,0 +1,184 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Highcharts Example</title>
+
+    <style type="text/css">
+        #container {
+            height: 400px;
+        }
+
+        .highcharts-figure,
+        .highcharts-data-table table {
+            min-width: 310px;
+            max-width: 800px;
+            margin: 1em auto;
+            border: 1px solid #ccc;
+        }
+
+        .highcharts-data-table table {
+            font-family: Verdana, sans-serif;
+            border-collapse: collapse;
+            border: 1px solid #ebebeb;
+            margin: 10px auto;
+            text-align: center;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .highcharts-data-table caption {
+            padding: 1em 0;
+            font-size: 1.2em;
+            color: #555;
+        }
+
+        .highcharts-data-table th {
+            font-weight: 600;
+            padding: 0.5em;
+        }
+
+        .highcharts-data-table td,
+        .highcharts-data-table th,
+        .highcharts-data-table caption {
+            padding: 0.5em;
+        }
+
+        .highcharts-data-table thead tr,
+        .highcharts-data-table tr:nth-child(even) {
+            background: #f8f8f8;
+        }
+
+        .highcharts-data-table tr:hover {
+            background: #f1f7ff;
+        }
+    </style>
+</head>
+
+<body>
+    <script src="highcharts.js"></script>
+    <script src="highcharts-more.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+
+
+    <table class="highcharts-figure">
+        <tr>
+            <td>From:</td>
+            <td><input id="dtFrom" type="datetime-local" value="2021-01-01T00:00:00.000"></input></td>
+        </tr>
+        <tr>
+            <td>To:</td>
+            <td><input id="dtTo" type="datetime-local" value="2022-01-01T00:00:00.000"></input></td>
+        </tr>
+        <tr>
+            <td></td>
+            <td>
+                <button onclick="analyze()">Analyze!</button>
+                <button onclick="analyze()">Analyze- 1 week</button>
+                <button onclick="analyze()">Analyze+ 1 week</button>
+            </td>
+            
+        </tr>
+
+    </table>
+
+    <figure class="highcharts-figure">
+        <div id="container"></div>
+    </figure>
+
+
+    <script type="text/javascript">
+
+        var options = {
+            chart: {
+                zoomType: 'x'
+            },
+
+            title: {
+                text: 'Bitcoin Miner'
+            },
+            subtitle: {
+                text: 'we hope it\'s getting better'
+            },
+            yAxis: {
+                title: {
+                    text: 'x',
+                },
+                //zoomEnabled:false,
+            },
+            xAxis: {
+                type: 'datetime',
+            },
+            series: [{
+                name: 'open',
+                data: null,
+                tooltip: {
+                    valueSuffix: ' :-('
+                }
+            },{
+                name: 'close',
+                data: null,
+                tooltip: {
+                    valueSuffix: ' :-('
+                }
+            }],
+        }
+
+            function ourStartFunction(){
+                let now = new Date().toISOString();
+                let to = Date.parse(now) - 24*7*3600*1000;
+                $("#dtTo").val(now.substring(0,16));
+                $("#dtFrom").val(new Date(from).toISOString().subtr(0,16));
+                console.log(now);
+            }
+
+            window.onload = analyze();
+            function analyze(shift=""){
+
+            if(shift != ""){
+                let diff;
+                if(shift == "-lw")
+                    diff = -24 * 7 * 3600 *1000;
+                else if (shift == "+lw")
+                    diff = +24 * 7 *3600 *1000;
+                let from = Date.parse($("#dtFrom").val()) - 24*7*3600*1000;
+                let to = Date.parse($("#dtTo").val()) + 24*7*3600*1000;
+                $("dtFrom").val(new Date(from).toISOString().subtr(0,16));
+            }    
+
+            console.log($("#dtFrom").val());
+            let url = "https://api.coinpaprika.com/v1/coins/btc-bitcoin/ohlcv/historical?start=2022-02-20&end=2022-03-22";
+               // console.log(status);
+              //  console.dir(data);
+            url += "start="+$("#dtFrom").val().substr(0,10);
+            url += "&end=" +$("#dtTo").val().substr(0,10);
+            $.get(url,function(data,status){
+                var mydata = new Array();
+                var mydata2 = new Array();
+                console.dir(data)
+                for (let i = 0; i < data.length;i++){
+                    var point = new Array()
+                    var point2 = new Array();
+                    point[0] = Date.parse(data[i].time_open);
+                    point[1] = data[i].high;
+                    point2[0] = Date.parse(data[i].time_open);
+                    point2[1] = data[i].low;
+                    mydata.push(point);
+                    mydata2.push(point2);
+
+                }
+                console.dir(mydata);
+                console.dir(mydata2);
+                options.series[0].data = mydata;
+                options.series[1].data = mydata2;
+                Highcharts.chart('container',options);
+            });
+            
+        }
+       // Highcharts.chart("cointainer",options);
+    </script>
+</body>
+
+</html>

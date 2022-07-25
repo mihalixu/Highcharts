@@ -1,0 +1,190 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Highcharts Example</title>
+
+    <style type="text/css">
+        #container {
+            height: 400px;
+        }
+
+        .highcharts-figure,
+        .highcharts-data-table table {
+            min-width: 310px;
+            max-width: 800px;
+            margin: 1em auto;
+            border: 1px solid #ccc;
+        }
+
+        .highcharts-data-table table {
+            font-family: Verdana, sans-serif;
+            border-collapse: collapse;
+            border: 1px solid #ebebeb;
+            margin: 10px auto;
+            text-align: center;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .highcharts-data-table caption {
+            padding: 1em 0;
+            font-size: 1.2em;
+            color: #555;
+        }
+
+        .highcharts-data-table th {
+            font-weight: 600;
+            padding: 0.5em;
+        }
+
+        .highcharts-data-table td,
+        .highcharts-data-table th,
+        .highcharts-data-table caption {
+            padding: 0.5em;
+        }
+
+        .highcharts-data-table thead tr,
+        .highcharts-data-table tr:nth-child(even) {
+            background: #f8f8f8;
+        }
+
+        .highcharts-data-table tr:hover {
+            background: #f1f7ff;
+        }
+
+        table {
+        margin-left:auto;
+        margin-right:auto;
+        border-collapse: collapse;
+        /*width: 100%; */
+        }
+        
+        td, th {
+        text-align: left;
+        padding: 8px;
+        }
+        
+        tr:nth-child(even) {
+        background-color: #f2f2f2;
+        }
+    </style>
+</head>
+
+<body>
+    <script src="highcharts.js"></script>
+    <script src="highcharts-more.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>        
+
+    <table>
+        <tr>
+            <td>From:</td>
+            <td><input id="dtFrom" type="datetime-local" value="2021-01-01T00:00:00.000"></input></td>
+        </tr>
+        <tr>
+            <td>To:</td>
+            <td><input id="dtTo" type="datetime-local" value="2022-01-01T00:00:00.000"></input></td>
+        </tr>
+        <tr>
+            <td></td>
+            <td>
+                <button onclick="analyze('-1w')">-1 Week</button>
+                <button onclick="analyze()">Analyze!</button>
+                <button onclick="analyze('+1w')">+1 week</button>
+            </td>
+        </tr>
+    </table>
+
+    <figure class="highcharts-figure">
+        <div id="container"></div>
+    </figure>
+
+    <script type="text/javascript">
+
+        var options = {
+            chart: {
+                zoomType: 'x'
+            },
+
+            title: {
+                text: 'the thing in which Mr.Zorn trusts ...'
+            },
+            subtitle: {
+                text: 'but MJ never will'
+            },
+            yAxis: {
+                title: {
+                    text: 'x',
+                },
+                //zoomEnabled:false,
+            },
+            xAxis: {
+                type: 'datetime',
+            },
+            series: [{
+                name: 'open',
+                data: null,
+                tooltip: {
+                    valueSuffix: ' $'
+                }
+            },
+                {
+                name: 'close',
+                data: null,
+                tooltip: {
+                    valueSuffix: ' $'
+                },
+            }],
+        }
+        window.onload = ourStartFunction; 
+        function ourStartFunction(){
+            
+            let from = Date.parse(new Date().toISOString())-24*7*3600*1000;
+            $("#dtFrom").val(new Date(from).toISOString().substr(0,16)); // -1 week
+            $("#dtTo").val(new Date().toISOString().substr(0,16));
+        }
+        function analyze(shift="")
+        {
+            if (shift != "")
+            {
+                let diff = 24 * 7 * 3600 * 1000;
+                if (shift == "-1w")
+                    diff *= -1;
+                let from = Date.parse($("#dtFrom").val()) + diff;
+                let to = Date.parse($("#dtTo").val()) + diff;
+                $("#dtFrom").val(new Date(from).toISOString().substr(0,16));
+                $("#dtTo").val(new Date(to).toISOString().substr(0,16));
+            }
+
+            let url = "https://api.coinpaprika.com/v1/coins/btc-bitcoin/ohlcv/historical?";
+            url += "start="+$("#dtFrom").val().substr(0,10);
+            url += "&end="+$("#dtTo").val().substr(0,10);
+            
+            $.get(url, function (data, status) {
+                // let mydata = new Array();
+                let openArr = new Array();
+                let closeArr = new Array();
+                
+                for (let i = 0; i < data.length; i++)
+                {
+                    let btc_open= new Array();
+                    btc_open[0]=Date.parse(data[i].time_open);
+                    console.log(btc_open[0]);
+                    btc_open[1]=data[i].low;
+                    openArr.push(btc_open);
+
+                    let btc_close = new Array();
+                    btc_close[0] = btc_open[0];
+                    btc_close[1] = data[i].high;
+                    closeArr.push(btc_close);
+                }
+                options.series[0].data = openArr;
+                options.series[1].data = closeArr;
+                Highcharts.chart('container', options);
+            });
+        }
+    </script>
+</body>
+</html>

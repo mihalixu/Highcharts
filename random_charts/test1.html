@@ -1,0 +1,132 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Highcharts Example</title>
+
+    <style type="text/css">
+        #container {
+            height: 400px;
+        }
+
+        .highcharts-figure,
+        .highcharts-data-table table {
+            min-width: 310px;
+            max-width: 800px;
+            margin: 1em auto;
+            border: 1px solid #ccc;
+        }
+
+        .highcharts-data-table table {
+            font-family: Verdana, sans-serif;
+            border-collapse: collapse;
+            border: 1px solid #ebebeb;
+            margin: 10px auto;
+            text-align: center;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .highcharts-data-table caption {
+            padding: 1em 0;
+            font-size: 1.2em;
+            color: #555;
+        }
+
+        .highcharts-data-table th {
+            font-weight: 600;
+            padding: 0.5em;
+        }
+
+        .highcharts-data-table td,
+        .highcharts-data-table th,
+        .highcharts-data-table caption {
+            padding: 0.5em;
+        }
+
+        .highcharts-data-table thead tr,
+        .highcharts-data-table tr:nth-child(even) {
+            background: #f8f8f8;
+        }
+
+        .highcharts-data-table tr:hover {
+            background: #f1f7ff;
+        }
+    </style>
+</head>
+
+<body>
+    <button><input id="from" type="datetime-local" value="2022-03-22T00:00:00.000"> </input></button>
+    <br>
+    <button><input id="to" type="datetime-local" value="2022-03-23T00:00:00.000"> </input></button>
+    <br>
+    <br>
+    <button onclick="loadData()">showprice</button>
+    <script src="highcharts.js"></script>
+    <script src="highcharts-more.js"></script>
+
+    <figure class="highcharts-figure">
+        <div id="container"></div>
+    </figure>
+
+    <script >
+
+
+        var options = {
+            chart: {
+                zoomType: 'x'
+            },
+
+            title: {
+                text: 'Strompreis'
+            },
+            subtitle: {
+                text: 'Pay les ;)'
+            },
+            yAxis: {
+                title:{
+                    text:"Price",
+                }
+            },
+            xAxis: {
+                type: 'datetime',
+            },
+            series: [{
+                name: 'price',
+                data: null,
+                tooltip: {
+                    valueSuffix: 'Eur/MWh'
+                }
+            }],
+        }
+        function loadData(){
+            let from = Date.parse(document.getElementById("from").value); 
+            let to = Date.parse(document.getElementById("to").value);
+            let url1 = "https://api.awattar.at/v1/marketdata" +"?start=" + from + "&end=" + to; 
+            let url2 = "https://api.coinpaprika.com/v1/coins/btc-bitcoin/ohlcv/historical?start=2022-02-20&end=2022-03-22";
+            xml = new XMLHttpRequest();
+            xml.open('get',url2,true);
+            xml.onreadystatechange = function(){
+                if(xml.readyState == 4 && xml.status == 200){
+                    let obj = JSON.parse(xml.responseText);
+                    var mydata = new Array;
+                    console.dir(obj);
+                    for(let i = 0; i < obj.data.length;i++){
+                        var points = new Array;
+                        points[0] = obj.data[i].end_timestamp;
+                        points[1] = obj.data[i].marketprice;
+                        mydata[i] = points;
+                    }
+                    options.series[0].data = mydata;
+                    Highcharts.chart('container',options);
+                }
+            }
+            xml.send();   
+        }
+
+    </script>
+</body>
+
+</html>
